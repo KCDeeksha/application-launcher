@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('/static/bg.jpg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: white;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Align children vertically */
+            justify-content: flex-start; /* Start from top */
+            align-items: center; /* Center horizontally */
+            position: relative; /* Position relative for absolute logo positioning */
+        }
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5); /* Optional: Adds a slight background to the container for better readability */
+            border-radius: 10px; /* Optional: Rounds the corners of the container */
+            margin-top: 40px; /* Adjust top margin to create more space */
+            text-align: center; /* Center align content */
+        }
+        input, select {
+            margin: 5px 0;
+            padding: 8px;
+            width: calc(100% - 10px); /* Adjusted width for input and select */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            margin: 5px 0;
+            padding: 8px 20px; /* Adjusted padding for button */
+            background-color: #3498db; /* Blue color */
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+            cursor: pointer;
+            padding: 20px; /* Increased padding for larger bars */
+            border: 2px solid #3498db; /* Added border for better visibility */
+            border-radius: 10px; /* Rounded corners */
+            background-color: rgba(0, 0, 0, 0.8); /* Background color */
+            transition: transform 0.2s ease-in-out; /* Smooth transition */
+        }
+        .app-item:hover {
+            transform: scale(1.1); /* Scale effect on hover */
+        }
+        .app-icon {
+            width: 64px;
+            height: 64px;
+        }
+        .settings-icon {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            text-align: center;
+        }
+        .loading-animation {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+        .home-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .app-launcher-heading {
+            margin-top: 60px; /* Increase margin for more space */
+            font-size: 24px; /* Increased font size for heading */
+        }
+        .logo {
+            width: 100px; /* Adjust width as needed */
+            height: auto; /* Maintain aspect ratio */
+            cursor: pointer; /* Change cursor to pointer */
+        }
+        .logo-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .edit-delete-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        .edit-delete-buttons button {
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .edit-delete-buttons button:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        function deleteApplication(index) {
+            fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `index=${index}`
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Application deleted successfully');
+                      location.reload();
+                  } else {
+                      alert('Failed to delete application');
+                  }
+              });
+        }
+
+        function editApplication(index) {
+            const newPath = prompt("Enter new path:");
+            const newParam = prompt("Enter new parameter:");
+            if (newPath) {
+                fetch('/edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `index=${index}&new_path=${encodeURIComponent(newPath)}&new_param=${encodeURIComponent(newParam)}`
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert('Application updated successfully');
+                          location.reload();
+                      } else {
+                          alert('Failed to update application: ' + data.error);
+                      }
+                  });
+            }
+        }
+
+        function addApplication() {
+            const appPath = document.getElementById('app_path').value;
+            const appParam = document.getElementById('app_param').value;
+            if (!appPath) {
+                alert('Application path is required');
+                return;
+            }
+            fetch('/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `app_path=${encodeURIComponent(appPath)}&app_param=${encodeURIComponent(appParam)}`
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Application added successfully');
+                      location.reload();  // Reload the page to reflect changes
+                  } else {
+                      alert('Failed to add application');
+                  }
+              });
+        }
+
+        function showAppActions() {
+            const appIndex = document.getElementById('app-select').value;
+            if (appIndex !== '') {
+                document.getElementById('app-actions').style.display = 'block';
+                document.getElementById('edit-button').onclick = () => editApplication(appIndex);
+                document.getElementById('delete-button').onclick = () => deleteApplication(appIndex);
+            } else {
+                document.getElementById('app-actions').style.display = 'none';
+            }
+        }
+    </script>
+</head>
+<body>
+    
+    <div class="logo-container">
+        <a href="http://www.opezee.com" target="_blank">
+            <img src="/static/opezee.png" alt="OpEzee Logo" class="logo">
+        </a>
+        </div>
+    <h1 class="app-launcher-heading">Application Settings</h1>
+    <div class="container">
+        <!-- Form for adding applications -->
+        <h2>Add Application</h2>
+        <div>
+            <input type="text" id="app_path" placeholder="Application Path" required>
+            <br>
+            <input type="text" id="app_param" placeholder="Application Parameter">
+            <br>
+            <button onclick="addApplication()">Add</button>
+        </div>
+        
+        <!-- Application selection dropdown -->
+        <h2>Choose Application</h2>
+        <select id="app-select" onchange="showAppActions()">
+            <option value="">Select an application...</option>
+            {% for app in applications %}
+            <option value="{{ loop.index0 }}">{{ app.param }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Edit/Delete buttons -->
+        <div id="app-actions" class="edit-delete-buttons" style="display: none;">
+            <button id="edit-button">Edit</button>
+            <button id="delete-button">Delete</button>
+        </div>
+    </div>
+    <img src="/static/ho.png" alt="Home" class="settings-icon" onclick="window.location.href='/'">
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-animation"></div>
+        <div>Loading...</div>
+        <button class="home-button" onclick="goToHome()">Home</button>
+    </div>
+</body>
+</html>
